@@ -7,12 +7,13 @@ import path from "node:path";
 import { fileURLToPath } from "url";
 import { dirname } from "path";
 import fs from "fs/promises";
+import { nanoid } from "nanoid";
 
 import { User } from "../models/user.js";
-import { ctrlWrapper, HttpError } from "../helpers/index.js";
+import { ctrlWrapper, HttpError, sendEmail } from "../helpers/index.js";
 
 dotenv.config();
-const { SECRET_KEY } = process.env;
+const { SECRET_KEY, BASE_URL } = process.env;
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
@@ -29,16 +30,67 @@ const register = async (req, res) => {
 
   const hashedPassword = await bcrypt.hash(password, 10);
   const avatarURL = gravatar.url(email);
+  const verificationCode = nanoid();
 
   const newUser = await User.create({
     ...req.body,
     password: hashedPassword,
     avatarURL,
+    verificationCode,
   });
+
+  const verifyEmailData = {
+    to: email,
+    subject: "Please verify your email",
+    html: `<a target="_blank" href="${BASE_URL}/api/auth/verify/${verificationCode}">Click to verify your email</a>`,
+  };
+
+  await sendEmail(verifyEmailData);
 
   res.status(201).json({
     name: newUser.name,
     email: newUser.email,
+  });
+};
+
+const verifyEmail = async (req, res) => {
+  const { verificationCode } = req.params;
+  const user = await User.findOne({ verificationCode });
+
+  if (!user) {
+    throw HttpError(404, "User not found");
+  }
+  await User.findByIdAndUpdate(user._id, {
+    verified: true,
+    verificationCode: "",
+  });
+
+  res.json({
+    message: "Email successfully verified",
+  });
+};
+
+const resendVerifyEmail = async (req, res) => {
+  const { email } = req.body;
+  const user = await User.findOne({ email });
+
+  if (!user) {
+    throw HttpError(404, "User not found");
+  }
+  if (user.verified) {
+    throw HttpError(400, "Email is already verified");
+  }
+
+  const verifyEmailData = {
+    to: email,
+    subject: "Please verify your email",
+    html: `<a target="_blank" href="${BASE_URL}/api/auth/verify/${user.verificationCode}">Click to verify your email</a>`,
+  };
+
+  await sendEmail(verifyEmailData);
+
+  res.json({
+    message: "Verification email sent",
   });
 };
 
@@ -49,6 +101,10 @@ const login = async (req, res) => {
 
   if (!user) {
     throw HttpError(401, "Email or password is invalid");
+  }
+
+  if (!user.verified) {
+    throw HttpError(401, "Email is not verified");
   }
 
   const passwordCompare = await bcrypt.compare(password, user.password);
@@ -108,4 +164,6 @@ export default {
   getCurrent: ctrlWrapper(getCurrent),
   logout: ctrlWrapper(logout),
   updateAvatar: ctrlWrapper(updateAvatar),
+  verifyEmail: ctrlWrapper(verifyEmail),
+  resendVerifyEmail: ctrlWrapper(resendVerifyEmail),
 };
