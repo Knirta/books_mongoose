@@ -8,6 +8,7 @@ import { fileURLToPath } from "url";
 import { dirname } from "path";
 import fs from "fs/promises";
 import { nanoid } from "nanoid";
+import handlebars from "handlebars";
 
 import { User } from "../models/user.js";
 import { ctrlWrapper, HttpError, sendEmail } from "../helpers/index.js";
@@ -19,6 +20,7 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
 
 const avatarsDir = path.join(__dirname, "../", "public", "avatars");
+const tempatesDir = path.join(__dirname, "../", "templates");
 
 const register = async (req, res) => {
   const { email, password } = req.body;
@@ -125,6 +127,72 @@ const login = async (req, res) => {
   });
 };
 
+const requestPasswordReset = async (req, res) => {
+  const { email } = req.body;
+  const user = await User.findOne({ email });
+
+  if (!user) {
+    throw HttpError(404, "User not found");
+  }
+
+  const resetToken = jwt.sign({ sub: user._id, email }, SECRET_KEY, {
+    expiresIn: "15m",
+  });
+
+  const resetPasswordTempatePath = path.join(
+    tempatesDir,
+    "resetPasswordEmail.html"
+  );
+
+  const templateSource = (
+    await fs.readFile(resetPasswordTempatePath)
+  ).toString();
+
+  const template = handlebars.compile(templateSource);
+
+  const html = template({
+    name: user.name,
+    link: `${BASE_URL}/api/auth/reset-password/${resetToken}`,
+  });
+
+  const resetEmailData = {
+    to: email,
+    subject: "Password Reset Request",
+    html,
+  };
+
+  await sendEmail(resetEmailData);
+
+  res.json({
+    message: "Password reset link has been sent to your email",
+  });
+};
+
+const resetPassword = async (req, res) => {
+  const { resetToken } = req.params;
+  const { password } = req.body;
+
+  let payload;
+  try {
+    payload = jwt.verify(resetToken, SECRET_KEY);
+  } catch (error) {
+    throw HttpError(400, "Invalid or expired reset token");
+  }
+
+  const user = await User.findById(payload.sub);
+
+  if (!user) {
+    throw HttpError(404, "User not found");
+  }
+
+  const hashedPassword = await bcrypt.hash(password, 10);
+  await User.findByIdAndUpdate(user._id, { password: hashedPassword });
+
+  res.json({
+    message: "Password has been reset successfully",
+  });
+};
+
 const getCurrent = async (req, res) => {
   const { name, email } = req.user;
 
@@ -166,4 +234,6 @@ export default {
   updateAvatar: ctrlWrapper(updateAvatar),
   verifyEmail: ctrlWrapper(verifyEmail),
   resendVerifyEmail: ctrlWrapper(resendVerifyEmail),
+  requestPasswordReset: ctrlWrapper(requestPasswordReset),
+  resetPassword: ctrlWrapper(resetPassword),
 };

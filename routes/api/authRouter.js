@@ -24,6 +24,18 @@ authRouter.post(
 //sign in
 authRouter.post("/login", validateBody(schemas.loginSchema), ctrl.login);
 
+authRouter.post(
+  "/request-password-reset",
+  validateBody(schemas.verifyEmailSchema),
+  ctrl.requestPasswordReset
+);
+
+authRouter.post(
+  "/reset-password/:resetToken",
+  validateBody(schemas.resetPasswordSchema),
+  ctrl.resetPassword
+);
+
 authRouter.get("/current", authenticate, ctrl.getCurrent);
 
 authRouter.post("/logout", authenticate, ctrl.logout);

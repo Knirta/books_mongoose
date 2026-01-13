@@ -26,19 +26,25 @@ const registerSchema = Joi.object({
   password: Joi.string().min(6).required(),
 });
 
-const verifyEmailSchema = Joi.object({
-  email: Joi.string().pattern(emailRegexp).required(),
-});
-
 const loginSchema = Joi.object({
   email: Joi.string().pattern(emailRegexp).required(),
   password: Joi.string().min(6).required(),
 });
 
+const verifyEmailSchema = Joi.object({
+  email: Joi.string().pattern(emailRegexp).required(),
+});
+
+const resetPasswordSchema = Joi.object({
+  password: Joi.string().min(6).required(),
+  // resetToken: Joi.string().required(),
+});
+
 const schemas = {
   registerSchema,
-  verifyEmailSchema,
   loginSchema,
+  verifyEmailSchema,
+  resetPasswordSchema,
 };
 
 const User = model("user", userSchema);
