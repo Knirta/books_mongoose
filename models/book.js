@@ -30,15 +30,23 @@ const bookSchema = new Schema(
       match: dateRegexp,
       required: true,
     },
+    owner: {
+      type: Schema.Types.ObjectId,
+      ref: "user",
+      required: true,
+    },
   },
   { versionKey: false, timestamps: true }
 );
 
+//bookSchema - схема для внутрішньої перевірки; після того як дані з запиту (з фронтенду) пройшли перевірку Joi,
+//  яка є мідлварою перед винонанням контролера у своєму роуті, далі відбувається збереження даних у базі даних:
+// тут mongoose застосовує свою перевірку перед збереженням  bookSchema.post("save", handleMongooseError);
 bookSchema.post("save", handleMongooseError);
 
 const addSchema = Joi.object({
-  title: Joi.string().required(),
-  author: Joi.string().required(),
+  title: Joi.string().min(3).max(21).required(),
+  author: Joi.string().min(3).max(21).required(),
   favorite: Joi.boolean(),
   genre: Joi.string()
     .valid(...genreList)
