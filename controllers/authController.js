@@ -11,10 +11,15 @@ import { nanoid } from "nanoid";
 import handlebars from "handlebars";
 
 import { User } from "../models/user.js";
-import { ctrlWrapper, HttpError, sendEmail } from "../helpers/index.js";
+import {
+  ctrlWrapper,
+  HttpError,
+  sendEmail,
+  saveFileToCloudinary,
+} from "../helpers/index.js";
 
 dotenv.config();
-const { SECRET_KEY, BASE_URL } = process.env;
+const { SECRET_KEY, BASE_URL, ENABLE_CLOUDINARY } = process.env;
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
@@ -219,8 +224,15 @@ const updateAvatar = async (req, res) => {
   image.resize({ w: 250 });
   await image.write(tempUpload);
 
-  await fs.rename(tempUpload, resultUpload);
-  const avatarURL = path.join("avatars", filename);
+  let avatarURL;
+
+  if (ENABLE_CLOUDINARY === "true") {
+    avatarURL = await saveFileToCloudinary(req.file);
+  } else {
+    await fs.rename(tempUpload, resultUpload);
+    avatarURL = path.join("avatars", filename);
+  }
+
   await User.findByIdAndUpdate(_id, { avatarURL });
 
   res.json({ avatarURL });

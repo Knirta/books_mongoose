@@ -6,6 +6,7 @@ import parseSortParams from "./parseSortParams.js";
 import parseFilterParams from "./parseFilterParams.js";
 import HttpError from "./HttpError.js";
 import sendEmail from "./sendEmail.js";
+import { saveFileToCloudinary } from "./saveFileToCloudinary.js";
 
 export {
   ctrlWrapper,
@@ -16,4 +17,5 @@ export {
   parseFilterParams,
   HttpError,
   sendEmail,
+  saveFileToCloudinary,
 };
