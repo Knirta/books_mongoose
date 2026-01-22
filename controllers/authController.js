@@ -9,6 +9,7 @@ import { dirname } from "path";
 import fs from "fs/promises";
 import { nanoid } from "nanoid";
 import handlebars from "handlebars";
+import { generateAuthUrl } from "../helpers/googleOAuth2.js";
 
 import { User } from "../models/user.js";
 import {
@@ -16,6 +17,8 @@ import {
   HttpError,
   sendEmail,
   saveFileToCloudinary,
+  getFullNameFromGoogleTokenPayload,
+  validateCode,
 } from "../helpers/index.js";
 
 dotenv.config();
@@ -238,6 +241,49 @@ const updateAvatar = async (req, res) => {
   res.json({ avatarURL });
 };
 
+const getGoogleOAuthUrl = async (req, res) => {
+  const url = generateAuthUrl();
+  res.json({
+    status: 200,
+    message: "Successfully generated Google OAuth URL",
+    data: { url },
+  });
+};
+
+const loginWithGoogle = async (req, res) => {
+  const { code } = req.body;
+  const loginTicket = await validateCode(code);
+  const payload = loginTicket.getPayload();
+  if (!payload) {
+    throw HttpError(401, "Unauthorized");
+  }
+
+  let user = await User.findOne({ email: payload.email });
+
+  if (!user) {
+    const password = await bcrypt.hash(nanoid(), 10);
+    const avatarURL = gravatar.url(payload.email);
+    user = await User.create({
+      email: payload.email,
+      name: getFullNameFromGoogleTokenPayload(payload),
+      password,
+      avatarURL,
+      verified: true,
+    });
+  }
+
+  const payloadForToken = {
+    id: user._id,
+  };
+
+  const token = jwt.sign(payloadForToken, SECRET_KEY, { expiresIn: "15h" });
+  await User.findByIdAndUpdate(user._id, { token });
+
+  res.json({
+    token,
+  });
+};
+
 export default {
   register: ctrlWrapper(register),
   login: ctrlWrapper(login),
@@ -248,4 +294,6 @@ export default {
   resendVerifyEmail: ctrlWrapper(resendVerifyEmail),
   requestPasswordReset: ctrlWrapper(requestPasswordReset),
   resetPassword: ctrlWrapper(resetPassword),
+  getGoogleOAuthUrl: ctrlWrapper(getGoogleOAuthUrl),
+  loginWithGoogle: ctrlWrapper(loginWithGoogle),
 };
