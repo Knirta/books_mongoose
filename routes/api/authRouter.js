@@ -47,4 +47,12 @@ authRouter.patch(
   ctrl.updateAvatar
 );
 
+authRouter.get("/get-oauth-url", ctrl.getGoogleOAuthUrl);
+
+authRouter.post(
+  "/login-with-google",
+  validateBody(schemas.loginWithGoogleAuthSchema),
+  ctrl.loginWithGoogle
+);
+
 export default authRouter;

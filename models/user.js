@@ -40,11 +40,16 @@ const resetPasswordSchema = Joi.object({
   // resetToken: Joi.string().required(),
 });
 
+const loginWithGoogleAuthSchema = Joi.object({
+  code: Joi.string().required(),
+});
+
 const schemas = {
   registerSchema,
   loginSchema,
   verifyEmailSchema,
   resetPasswordSchema,
+  loginWithGoogleAuthSchema,
 };
 
 const User = model("user", userSchema);
