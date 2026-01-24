@@ -1,0 +1,89 @@
+tags:
+  - Books
+summary: Get list of books
+operationId: getBooks
+description: "Get list of books with this endpoint"
+security:
+  - bearerAuth: []
+parameters:
+  - in: query
+    name: page
+    schema:
+      type: integer
+      example: 1
+  - in: query
+    name: perPage
+    schema:
+      type: integer
+      example: 10
+  - in: query
+    name: sortBy
+    schema:
+      type: string
+      example: "title"
+    description: "All book's fields can be mentioned. Default value - _id"
+  - in: query
+    name: sortOrder
+    schema:
+      type: string
+      enum: ["asc", "desc"]
+      example: "asc"
+  - in: query
+    name: genre
+    schema:
+      type: string
+      enum: ["fantastic", "love", "detective", "history"]
+      example: fantastic
+responses:
+  "200":
+    description: Successfully found books!
+    content:
+      application/json:
+        schema:
+          type: object
+          required:
+            - status
+            - message
+            - data
+          properties:
+            status:
+              type: integer
+              example: 200
+            message:
+              type: string
+              example: Successfully found books!
+            data:
+              type: object
+              required:
+                - data
+                - page
+                - perPage
+                - totalItems
+                - totalPages
+                - hasNextPage
+                - hasPreviousPage
+              properties:
+                data:
+                  type: array
+                  items:
+                    $ref: "../../components/schemas/book.yaml"
+                page:
+                  type: number
+                  example: 2
+                perPage:
+                  type: number
+                  example: 4
+                totalItems:
+                  type: number
+                  example: 4
+                totalPages:
+                  type: number
+                  example: 4
+                hasNextPage:
+                  type: boolean
+                  example: false
+                hasPreviousPage:
+                  type: boolean
+                  example: true
+  "401":
+    $ref: "../../components/responses/401.yaml"

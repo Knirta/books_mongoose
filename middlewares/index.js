@@ -2,5 +2,6 @@ import isValidId from "./isValidId.js";
 import validateBody from "./validateBody.js";
 import authenticate from "./authenticate.js";
 import upload from "./upload.js";
+import swaggerDocs from "./swaggerDocs.js";
 
-export { isValidId, validateBody, authenticate, upload };
+export { isValidId, validateBody, authenticate, upload, swaggerDocs };

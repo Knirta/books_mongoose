@@ -5,6 +5,7 @@ import dotenv from "dotenv";
 
 import booksRouter from "./routes/api/booksRouter.js";
 import authRouter from "./routes/api/authRouter.js";
+import { swaggerDocs } from "./middlewares/index.js";
 
 dotenv.config();
 
@@ -17,6 +18,7 @@ app.use(express.static("public"));
 
 app.use("/api/books", booksRouter);
 app.use("/api/auth", authRouter);
+app.use("/api/docs", swaggerDocs());
 
 app.use((_, res) => {
   res.status(404).json({ message: "Route not found" });

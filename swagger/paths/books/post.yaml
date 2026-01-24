@@ -1,0 +1,66 @@
+tags:
+  - Books
+summary: Create book
+operationId: createBook
+description: "Create a book with payload"
+security:
+  - bearerAuth: []
+requestBody:
+  content:
+    application/json:
+      schema:
+        type: object
+        required:
+          - title
+          - author
+          - genre
+          - date
+          - owner
+        properties:
+          title:
+            description: "Book's title"
+            type: string
+            example: "Magic Book"
+          author:
+            description: "Book's author"
+            type: string
+            example: "John Doe"
+          genre:
+            description: "Book's genre"
+            type: string
+            enum: ["fantastic", "love", "detective", "history"]
+          date:
+            description: "Book's date"
+            type: string
+            example: "2023-10-10"
+          favorite:
+            description: "Is book favorite"
+            type: boolean
+            example: false
+          owner:
+            description: "Book's owner id"
+            type: string
+            example: 65e4decdd286b30065d54af9
+responses:
+  "201":
+    description: Creates a book
+    content:
+      application/json:
+        schema:
+          type: object
+          required:
+            - status
+            - message
+            - data
+          properties:
+            status:
+              type: integer
+              example: 201
+            message:
+              type: string
+              example: Successfully created a book!
+            data:
+              type: object
+              $ref: "../../components/schemas/book.yaml"
+  "401":
+    $ref: "../../components/responses/401.yaml"

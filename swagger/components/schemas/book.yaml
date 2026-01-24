@@ -1,0 +1,37 @@
+type: object
+required:
+  - _id
+  - title
+  - author
+  - genre
+  - date
+  - owner
+properties:
+  _id:
+    description: "Book's id"
+    type: string
+    example: 6967eb7d74f5e8288d22e3be
+  title:
+    description: "Book's title"
+    type: string
+    example: "Magic Book"
+  author:
+    description: "Book's author"
+    type: string
+    example: "John Doe"
+  favorite:
+    description: "Is book favorite"
+    type: boolean
+    example: false
+  genre:
+    description: "Book's genre"
+    type: string
+    enum: ["fantastic", "love", "detective", "history"]
+  date:
+    description: "Book's date"
+    type: string
+    example: "2023-10-10"
+  owner:
+    description: "Book's owner id"
+    type: string
+    example: 65e4decdd286b30065d54af9
